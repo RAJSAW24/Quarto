@@ -1,0 +1,148 @@
+---
+title: "Child Labor Trends: Exploring Socioeconomic Dynamics and Global Patterns"
+format: html
+editor: visual
+echo: false
+warning: false
+---
+
+```{r}
+library(dplyr)
+unicef_data <- read.csv("unicef_indicator_1.csv", stringsAsFactors = FALSE)
+metadata <- read.csv("unicef_metadata.csv", stringsAsFactors = FALSE)
+combined_data <- merge(unicef_data, metadata, by = "alpha_3_code")
+```
+
+```{r}
+library(dplyr)
+
+# Rename columns to remove special characters
+combined_data <- combined_data %>%
+  rename(
+    alpha_3_code = alpha_3_code,
+    country_x = country.x,
+    alpha_2_code_x = alpha_2_code.x,
+    numeric_code_x = numeric_code.x,
+    indicator = indicator,
+    time_period = time_period,
+    obs_value = obs_value,
+    sex = sex,
+    unit_multiplier = unit_multiplier,
+    unit_of_measure = unit_of_measure,
+    observation_status = observation_status,
+    observation_confidentaility = observation_confidentaility,
+    time_period_activity_related_to_when_the_data_are_collected = time_period_activity_related_to_when_the_data_are_collected,
+    current_age = current_age,
+    country_y = country.y,
+    alpha_2_code_y = alpha_2_code.y,
+    numeric_code_y = numeric_code.y,
+    year = year,
+    Population_total = Population..total,
+    GDP_per_capita_constant_2015_US = GDP.per.capita..constant.2015.US..,
+    GNI_current_US = GNI..current.US..,
+    Inflation_consumer_prices_annual = Inflation..consumer.prices..annual...,
+    Life_expectancy_at_birth_total_years = Life.expectancy.at.birth..total..years.,
+    Military_expenditure_percent_of_GDP = Military.expenditure....of.GDP.
+  )
+```
+
+```{r}
+library(plotly)
+library(dplyr)
+
+map_chart <- plot_geo(data = combined_data, locationmode = "ISO-3", color = ~obs_value) %>%
+  add_trace(
+    z = ~obs_value,
+    locations = ~alpha_3_code,
+    text = ~paste("Country: ", alpha_3_code, "<br>Child Labor Rate: ", obs_value, "%"),
+    colors = "Blues",
+    colorbar = list(title = "Child Labor Rate (%)")
+  ) %>%
+  layout(
+    title = "Child Labor Rates Across Countries",
+    geo = list(
+      showframe = FALSE,
+      projection = list(type = "mercator")
+    )
+  )
+
+map_chart
+
+```
+
+**Mapping Global Child Labor: Exploring Regional Disparities**
+
+This interactive map chart delves into the complex issue of child labor, offering a visual narrative of its prevalence across countries. Each shade of blue represents varying degrees of child labor rates, with darker hues indicating higher rates. As we navigate through different regions, we uncover stark disparities in child labor incidence, reflecting socio-economic, cultural, and political factors. From densely populated urban centers to remote rural communities, the map provides insights into the challenges faced by children worldwide. By shining a spotlight on these disparities, we underscore the urgent need for concerted efforts to combat child labor and protect the rights and well-being of vulnerable children globally.
+
+```{r}
+library(viridis)
+
+subset_countries <- combined_data[1:1000, ]
+
+bar_chart <- subset_countries %>%
+  ggplot(aes(x = alpha_3_code, y = obs_value, fill = alpha_3_code)) +
+  geom_bar(stat = "identity") +
+  scale_fill_viridis_d() + 
+  labs(
+    title = "Child Labor Rates by Country (Top 1000)",
+    x = "Country",
+    y = "Child Labor Rate (%)"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+print(bar_chart)
+
+```
+
+**Exploring Global Child Labor Rates**
+
+This vibrant bar chart provides a vivid portrayal of child labor rates across countries, offering insights into the prevalence of this critical issue on a global scale. Utilizing the **`viridis`** color palette, each bar is distinguished by a rich spectrum of colors, enhancing the visual impact and facilitating easy interpretation of the data. The chart represents a subset of the top 1000 countries with the highest child labor rates, enabling focused analysis while maintaining a comprehensive overview. Through this colorful lens, we gain a deeper understanding of the geographical distribution and magnitude of child labor, underscoring the urgency of addressing this pressing challenge to safeguard the rights and well-being of children worldwide.
+
+```{r}
+scatter_plot <- subset_countries %>%
+  ggplot(aes(x = GDP_per_capita_constant_2015_US, y = obs_value, color = alpha_3_code)) +  
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, aes(group = 1), color = "blue") +  # Add regression line
+  labs(
+    title = "Child Labor Rate vs. GDP per Capita",
+    x = "GDP per Capita (USD)",
+    y = "Child Labor Rate (%)"
+  ) +
+  theme_minimal()
+
+print(scatter_plot)
+
+```
+
+**Exploring the Intersection of Economic Prosperity and Child Labor**
+
+This scatter plot delves into the intricate relationship between economic prosperity and the prevalence of child labor across nations. Each colorful dot on the plot represents a country, with its position indicating the country's GDP per capita on the x-axis and the corresponding child labor rate on the y-axis. As we examine the distribution of dots, patterns emerge, revealing the complex dynamics at play. While some countries exhibit low child labor rates despite modest GDP per capita, others face higher rates despite economic affluence. The regression line overlaid on the plot offers insights into the overall trend, highlighting the challenges of mitigating child labor in the pursuit of economic growth. Through this exploration, we gain a deeper understanding of the multifaceted nature of child labor and the need for targeted interventions to address its root causes within varying socio-economic contexts.
+
+```{r}
+library(dplyr)
+
+random_time_periods <- combined_data %>% 
+  distinct(time_period) %>% 
+  sample_n(10) %>% 
+  pull(time_period)
+
+subset_data <- combined_data %>%
+  filter(time_period %in% random_time_periods)
+
+time_series_plot <- subset_data %>%
+  ggplot(aes(x = time_period, y = obs_value)) +
+  geom_line() +
+  labs(
+    title = "Child Labor Rates Over Time (Random Subset)",
+    x = "Time Period",
+    y = "Child Labor Rate (%)"
+  ) +
+  theme_minimal()
+
+print(time_series_plot)
+
+```
+
+**Unveiling the Fluctuations: A Glimpse into Child Labor Trends**
+
+This time series plot offers a serendipitous view into the ever-evolving landscape of child labor rates across selected time periods. Through a random selection process, ten distinct time points have been chosen, each representing a snapshot of historical data. As the lines weave and intersect on the graph, they trace the trajectory of child labor rates over time, revealing the ebb and flow of this societal phenomenon. While each plotted point may seem isolated, together they paint a nuanced picture of the persistent challenges and progress made in combating child labor globally. As we navigate through this randomized narrative, we are reminded of the importance of ongoing vigilance and concerted efforts to safeguard the rights and well-being of vulnerable children in every corner of the world.
